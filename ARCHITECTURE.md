@@ -1,10 +1,10 @@
-# Book My Show - Project Setup Guide
+# GrabShow - Project Setup Guide
 
 ---
 
 ## Project Overview
 
-**Book My Show** is a ticket booking platform built using Spring Boot microservices on AWS EC2.
+**GrabShow** is a ticket booking platform built using Spring Boot microservices on AWS EC2.
 
 ### Tech Stack
 - **Backend**: Spring Boot (Java)
