@@ -1,0 +1,7 @@
+target/
+*.log
+*.tmp
+*.swp
+*.iml
+.idea/
+.vscode/
