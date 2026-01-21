@@ -30,19 +30,19 @@ public class CartController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<CartItem>> getCartByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<CartItem>> getCartByUserId(@PathVariable("userId") Long userId) {
         List<CartItem> items = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(items);
     }
 
     @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
+    public ResponseEntity<Void> clearCart(@PathVariable("userId") Long userId) {
         cartService.clearCart(userId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}/item/{itemId}")
-    public ResponseEntity<Void> removeItemFromCart(@PathVariable Long userId, @PathVariable Long itemId) {
+    public ResponseEntity<Void> removeItemFromCart(@PathVariable("userId") Long userId, @PathVariable("itemId") Long itemId) {
         cartService.removeItemFromCart(userId, itemId);
         return ResponseEntity.noContent().build();
     }
