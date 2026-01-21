@@ -201,11 +201,13 @@ docker run hello-world
 ### Step 9: Install Jenkins
 
 ```bash
-# Add Jenkins repository
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+# Fix GPG key for Jenkins repository
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
 
-# Install Jenkins
+# Add Jenkins repository with correct key signing
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+# Update package list and install Jenkins
 sudo apt update
 sudo apt install jenkins -y
 
