@@ -31,7 +31,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Booking> getBookingById(@PathVariable Long id) {
+    public ResponseEntity<Booking> getBookingById(@PathVariable("id") Long id) {
         Booking booking = bookingService.getBookingById(id);
         return ResponseEntity.ok(booking);
     }
@@ -43,25 +43,25 @@ public class BookingController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable("userId") Long userId) {
         List<Booking> bookings = bookingService.getBookingsByUserId(userId);
         return ResponseEntity.ok(bookings);
     }
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<Booking>> getBookingsByEventId(@PathVariable Long eventId) {
+    public ResponseEntity<List<Booking>> getBookingsByEventId(@PathVariable("eventId") Long eventId) {
         List<Booking> bookings = bookingService.getBookingsByEventId(eventId);
         return ResponseEntity.ok(bookings);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Booking> updateBookingStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<Booking> updateBookingStatus(@PathVariable("id") Long id, @RequestParam("status") String status) {
         Booking updated = bookingService.updateBookingStatus(id, status);
         return ResponseEntity.ok(updated);
     }
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelBooking(@PathVariable Long id) {
+    public ResponseEntity<Void> cancelBooking(@PathVariable("id") Long id) {
         bookingService.cancelBooking(id);
         return ResponseEntity.noContent().build();
     }
