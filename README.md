@@ -327,6 +327,72 @@ docker-compose up -d mysql
 └── README.md             # This file
 ```
 
+## ☸️ Kubernetes Deployment
+
+### Quick Start
+
+```bash
+# Navigate to kubernetes directory
+cd kubernetes
+
+# Deploy using automated script
+chmod +x deploy.sh
+./deploy.sh
+
+# Or deploy manually
+kubectl apply -f configmap.yaml
+kubectl apply -f secret.yaml
+kubectl apply -f mysql-statefulset.yaml
+kubectl apply -f redis-deployment.yaml
+kubectl apply -f user-service.yaml
+kubectl apply -f event-service.yaml
+kubectl apply -f booking-service.yaml
+kubectl apply -f cart-service.yaml
+kubectl apply -f ingress.yaml
+```
+
+### Verify Deployment
+
+```bash
+# Watch pods come up
+kubectl get pods -w
+
+# Check services
+kubectl get svc
+
+# Test service discovery
+kubectl run -it --rm test --image=alpine:latest --restart=Never -- sh
+# Inside pod:
+wget -O- http://user-service:8001/actuator/health
+wget -O- http://event-service:8002/api/events
+```
+
+### Port Forwarding for Local Testing
+
+```bash
+# Forward services to localhost
+kubectl port-forward svc/user-service 8001:8001 &
+kubectl port-forward svc/event-service 8002:8002 &
+kubectl port-forward svc/booking-service 8003:8003 &
+kubectl port-forward svc/cart-service 8004:8004 &
+
+# Test APIs
+curl http://localhost:8002/api/events
+```
+
+### Key Features
+
+- **ConfigMap**: Non-sensitive configuration (DB URLs, Redis host)
+- **Secrets**: Sensitive data (MySQL passwords)
+- **StatefulSet**: MySQL with persistent storage
+- **Deployments**: 4 microservices with 4 replicas each
+- **Services**: ClusterIP for internal service discovery
+- **Ingress**: API routing and load balancing
+- **Pod Anti-Affinity**: Spread replicas across nodes
+- **Health Checks**: Liveness & readiness probes on all services
+
+See [kubernetes/README.md](kubernetes/README.md) for detailed documentation.
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -343,7 +409,8 @@ docker-compose up -d mysql
 - **Jenkins**: http://localhost:8080/
 - **MySQL**: localhost:3306
 - **Redis**: localhost:6379
+- **Kubernetes Docs**: [kubernetes/README.md](kubernetes/README.md)
 
 ---
 
-**Built with ❤️ using Spring Boot, Docker, and Microservices Architecture**
+**Built with ❤️ using Spring Boot, Docker, Kubernetes, and Microservices Architecture**
