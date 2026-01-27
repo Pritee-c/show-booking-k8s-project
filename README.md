@@ -23,6 +23,9 @@ A scalable ticket booking system built with Spring Boot microservices architectu
 - **Cache**: Redis 7 (for cart service)
 - **Gateway**: Nginx 1.24
 - **Container**: Docker, Docker Compose
+- **Orchestration**: Kubernetes 1.28+
+- **Monitoring**: Prometheus, Grafana, AlertManager
+- **Metrics**: Micrometer, Spring Boot Actuator
 - **CI/CD**: Jenkins 2.479.3
 - **Cloud**: AWS EC2 (Ubuntu 22.04)
 
@@ -228,6 +231,8 @@ docker-compose up -d --scale booking-service=3
 
 ## 📊 Monitoring
 
+### Docker Environment
+
 ```bash
 # Check container stats
 docker stats
@@ -241,6 +246,60 @@ docker exec -it grabshow-mysql mysql -ubookmyshow -p
 # Access Redis
 docker exec -it grabshow-redis redis-cli
 ```
+
+### Kubernetes Monitoring Stack
+
+The project includes a comprehensive monitoring solution with **Prometheus**, **Grafana**, and **AlertManager**.
+
+#### Quick Setup
+
+```bash
+# Automated installation
+chmod +x setup-monitoring.sh
+./setup-monitoring.sh
+```
+
+#### Access Monitoring Tools
+
+```bash
+# Get your node IP
+kubectl get nodes -o wide
+
+# Access via NodePort
+Prometheus:   http://<node-ip>:30090
+Grafana:      http://<node-ip>:30300  (admin/admin123)
+AlertManager: http://<node-ip>:30093
+```
+
+#### Key Features
+
+- **Metrics Collection**: Automatic scraping from all microservices every 30 seconds
+- **Service Discovery**: ServiceMonitors auto-discover new pods
+- **Pre-configured Alerts**: High error rate, slow response, memory pressure, pod crashes
+- **Real-time Dashboards**: JVM metrics, HTTP requests, latency, resource usage
+- **Alert Routing**: AlertManager for notification management
+
+#### Import Grafana Dashboards
+
+1. Login to Grafana (admin/admin123)
+2. Import these dashboard IDs:
+   - **1860**: Node Exporter (infrastructure)
+   - **15759**: Kubernetes Cluster Overview
+   - **11378**: JVM Micrometer (Spring Boot apps)
+
+#### View Metrics
+
+```bash
+# Check Prometheus targets
+http://<node-ip>:30090/targets
+
+# Example PromQL queries
+# Request rate: sum(rate(http_server_requests_seconds_count[5m])) by (job)
+# Error rate: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+# JVM memory: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}
+```
+
+For detailed monitoring documentation, see [monitoring_manual.md](monitoring_manual.md).
 
 ## 🧪 Testing
 
@@ -320,7 +379,20 @@ docker-compose up -d mysql
 ├── nginx/                 # API gateway configuration
 │   └── bookmyshow.conf
 ├── frontend/              # Static HTML/CSS/JS files
+├── kubernetes/            # Kubernetes manifests
+│   ├── configmap.yaml     # Non-sensitive configuration
+│   ├── secret.yaml.example # Secret template
+│   ├── mysql-statefulset.yaml
+│   ├── redis-deployment.yaml
+│   ├── *-service.yaml     # Microservice deployments
+│   ├── servicemonitor.yaml # Prometheus scraping config
+│   ├── prometheus-rules.yaml # Alert definitions
+│   ├── monitoring-nodeport.yaml # Monitoring access
+│   └── README.md          # Kubernetes documentation
 ├── docker-compose.yml     # Multi-container orchestration
+├── setup-monitoring.sh    # Automated monitoring setup
+├── monitoring_manual.md   # Comprehensive monitoring guide
+├── ARCHITECTURE.md        # System architecture documentation
 ├── .env                   # Environment variables (not in git)
 ├── .env.example           # Template for environment variables
 ├── .gitignore            # Git exclusions
@@ -385,13 +457,37 @@ curl http://localhost:8002/api/events
 - **ConfigMap**: Non-sensitive configuration (DB URLs, Redis host)
 - **Secrets**: Sensitive data (MySQL passwords)
 - **StatefulSet**: MySQL with persistent storage
-- **Deployments**: 4 microservices with 4 replicas each
+- **Deployments**: 4 microservices with 2 replicas each (scalable)
 - **Services**: ClusterIP for internal service discovery
 - **Ingress**: API routing and load balancing
-- **Pod Anti-Affinity**: Spread replicas across nodes
-- **Health Checks**: Liveness & readiness probes on all services
+- **Pod Anti-Affinity**: Spread replicas across nodes for high availability
+- **Health Checks**: Startup, liveness & readiness probes on all services
+- **Monitoring**: Prometheus + Grafana stack with ServiceMonitors
+- **Alerting**: Pre-configured alerts for errors, latency, resource usage
+- **NodePort Services**: External access to microservices and monitoring tools
 
-See [kubernetes/README.md](kubernetes/README.md) for detailed documentation.
+### Monitoring Stack
+
+```bash
+# Quick setup
+./setup-monitoring.sh
+
+# Access
+Prometheus:   http://<node-ip>:30090
+Grafana:      http://<node-ip>:30300  (admin/admin123)
+AlertManager: http://<node-ip>:30093
+```
+
+**What's monitored:**
+- HTTP request rates, latency, error rates
+- JVM memory, GC activity, thread count
+- Database connection pool stats
+- Redis connection and memory usage
+- Pod restarts, resource usage
+- Node health and resource pressure
+
+See [kubernetes/README.md](kubernetes/README.md) for detailed Kubernetes documentation.
+See [monitoring_manual.md](monitoring_manual.md) for comprehensive monitoring guide.
 
 ## 🤝 Contributing
 
@@ -404,12 +500,23 @@ See [kubernetes/README.md](kubernetes/README.md) for detailed documentation.
 
 ## 🔗 Links
 
-- **Frontend**: http://localhost/ (after deployment)
+### Docker Deployment
+- **Frontend**: http://localhost/
 - **API Gateway**: http://localhost/api/
 - **Jenkins**: http://localhost:8080/
 - **MySQL**: localhost:3306
 - **Redis**: localhost:6379
-- **Kubernetes Docs**: [kubernetes/README.md](kubernetes/README.md)
+
+### Kubernetes Deployment
+- **Microservices**: http://\<node-ip\>:30001-30004
+- **Prometheus**: http://\<node-ip\>:30090
+- **Grafana**: http://\<node-ip\>:30300 (admin/admin123)
+- **AlertManager**: http://\<node-ip\>:30093
+
+### Documentation
+- **Kubernetes Guide**: [kubernetes/README.md](kubernetes/README.md)
+- **Monitoring Manual**: [monitoring_manual.md](monitoring_manual.md)
+- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 

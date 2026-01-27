@@ -22,7 +22,7 @@ metadata:
   name: booking-service
   namespace: default
 spec:
-  replicas: 4
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -50,7 +50,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: booking-service
-        image: grabshow/booking-service:latest
+        image: priteecha/booking-service:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8003
@@ -63,22 +63,19 @@ spec:
             name: grabshow-secret
         env:
         - name: SPRING_DATASOURCE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: grabshow-config
-              key: DATABASE_URL_BOOKING
+          value: "jdbc:mysql://mysql-service:3306/bookingdb?createDatabaseIfNotExist=true"
         resources:
           requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
             memory: "512Mi"
             cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: 8003
-          initialDelaySeconds: 30
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -86,7 +83,7 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8003
-          initialDelaySeconds: 20
+          initialDelaySeconds: 60
           periodSeconds: 5
           timeoutSeconds: 5
           failureThreshold: 3

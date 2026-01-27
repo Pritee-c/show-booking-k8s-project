@@ -1,0 +1,131 @@
+---
+# PrometheusRule for Application Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: application-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: application.rules
+    interval: 30s
+    rules:
+    # Alert: High HTTP Error Rate
+    - alert: HighHTTPErrorRate
+      expr: |
+        sum(rate(http_requests_total{status=~"5.."}[5m])) by (job, instance)
+        /
+        sum(rate(http_requests_total[5m])) by (job, instance) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+        service: "{{ $labels.job }}"
+      annotations:
+        summary: "High HTTP error rate on {{ $labels.job }}"
+        description: "Error rate is {{ $value | humanizePercentage }} (> 5%)"
+
+    # Alert: Service Response Time High
+    - alert: ServiceResponseTimeHigh
+      expr: |
+        histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le))
+        > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High response time for {{ $labels.job }}"
+        description: "95th percentile response time: {{ $value }}s"
+
+    # Alert: JVM Memory Usage High
+    - alert: JVMMemoryUsageHigh
+      expr: |
+        sum(jvm_memory_used_bytes) by (pod)
+        /
+        sum(jvm_memory_max_bytes) by (pod) > 0.85
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High JVM memory usage on {{ $labels.pod }}"
+        description: "Memory usage: {{ $value | humanizePercentage }}"
+
+    # Alert: Pod Crash Loop
+    - alert: PodCrashLoop
+      expr: |
+        rate(kube_pod_container_status_restarts_total[30m]) > 0.1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod {{ $labels.pod }} is in crash loop"
+        description: "Pod restarting {{ $value }} times per minute"
+
+    # Alert: Database Connection High
+    - alert: DatabaseConnectionHigh
+      expr: |
+        mysql_global_status_threads_connected > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High database connections"
+        description: "Active connections: {{ $value }}"
+
+    # Alert: Redis Memory Usage High
+    - alert: RedisMemoryHigh
+      expr: |
+        redis_memory_used_bytes
+        /
+        redis_memory_max_bytes > 0.85
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis memory usage high"
+        description: "Memory usage: {{ $value | humanizePercentage }}"
+
+    # Alert: Pod Not Ready
+    - alert: PodNotReady
+      expr: |
+        sum by (pod) (kube_pod_status_phase{phase!="Running"}) > 0
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod {{ $labels.pod }} not ready"
+        description: "Pod phase: {{ $labels.phase }}"
+
+  - name: kubernetes.rules
+    interval: 30s
+    rules:
+    # Alert: Node Memory Pressure
+    - alert: NodeMemoryPressure
+      expr: |
+        kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Memory pressure on node {{ $labels.node }}"
+
+    # Alert: Node Disk Pressure
+    - alert: NodeDiskPressure
+      expr: |
+        kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk pressure on node {{ $labels.node }}"
+
+    # Alert: Node Not Ready
+    - alert: NodeNotReady
+      expr: |
+        kube_node_status_condition{condition="Ready",status="true"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node {{ $labels.node }} is not ready"

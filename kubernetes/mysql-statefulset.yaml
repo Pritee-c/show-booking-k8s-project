@@ -1,10 +1,29 @@
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: default
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS userdb;
+    CREATE DATABASE IF NOT EXISTS eventdb;
+    CREATE DATABASE IF NOT EXISTS bookingdb;
+    CREATE DATABASE IF NOT EXISTS cartdb;
+    GRANT ALL PRIVILEGES ON userdb.* TO 'bookmyshow'@'%';
+    GRANT ALL PRIVILEGES ON eventdb.* TO 'bookmyshow'@'%';
+    GRANT ALL PRIVILEGES ON bookingdb.* TO 'bookmyshow'@'%';
+    GRANT ALL PRIVILEGES ON cartdb.* TO 'bookmyshow'@'%';
+    FLUSH PRIVILEGES;
+
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mysql-pvc
   namespace: default
 spec:
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
@@ -43,6 +62,11 @@ spec:
       labels:
         app: mysql
     spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Equal"
+        value: ""
+        effect: "NoSchedule"
       containers:
       - name: mysql
         image: mysql:8.0
@@ -77,6 +101,8 @@ spec:
         volumeMounts:
         - name: mysql-storage
           mountPath: /var/lib/mysql
+        - name: mysql-init
+          mountPath: /docker-entrypoint-initdb.d
         livenessProbe:
           exec:
             command:
@@ -103,3 +129,6 @@ spec:
       - name: mysql-storage
         persistentVolumeClaim:
           claimName: mysql-pvc
+      - name: mysql-init
+        configMap:
+          name: mysql-init-script

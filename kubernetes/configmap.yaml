@@ -7,18 +7,14 @@ data:
   # MySQL Configuration
   MYSQL_USER: "bookmyshow"
   
-  # Database URLs (using MySQL service DNS name)
-  DATABASE_URL_USER: "jdbc:mysql://mysql-service:3306/userdb?createDatabaseIfNotExist=true"
-  DATABASE_URL_EVENT: "jdbc:mysql://mysql-service:3306/eventdb?createDatabaseIfNotExist=true"
-  DATABASE_URL_BOOKING: "jdbc:mysql://mysql-service:3306/bookingdb?createDatabaseIfNotExist=true"
-  DATABASE_URL_CART: "jdbc:mysql://mysql-service:3306/cartdb?createDatabaseIfNotExist=true"
-  
   # JPA/Hibernate Configuration
   JPA_DDL_AUTO: "update"
   
   # Redis Configuration
   REDIS_HOST: "redis-service"
   REDIS_PORT: "6379"
+  SPRING_REDIS_HOST: "redis-service"
+  SPRING_REDIS_PORT: "6379"
   
   # Spring Boot Actuator
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,metrics"

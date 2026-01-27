@@ -1,0 +1,75 @@
+---
+# ServiceMonitor for User Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: user-service-monitor
+  namespace: default
+  labels:
+    app: user-service
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# ServiceMonitor for Event Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: event-service-monitor
+  namespace: default
+  labels:
+    app: event-service
+spec:
+  selector:
+    matchLabels:
+      app: event-service
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# ServiceMonitor for Booking Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: booking-service-monitor
+  namespace: default
+  labels:
+    app: booking-service
+spec:
+  selector:
+    matchLabels:
+      app: booking-service
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# ServiceMonitor for Cart Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cart-service-monitor
+  namespace: default
+  labels:
+    app: cart-service
+spec:
+  selector:
+    matchLabels:
+      app: cart-service
+  endpoints:
+  - port: http
+    path: /actuator/prometheus
+    interval: 30s
+    scrapeTimeout: 10s

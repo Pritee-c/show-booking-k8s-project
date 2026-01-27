@@ -15,10 +15,10 @@ This directory contains all Kubernetes manifests needed to deploy the GrabShow m
 │  │   Ingress    │  ← External access point                       │
 │  └──────┬───────┘                                                │
 │         │                                                         │
-│         ├─→ user-service (4 replicas)    ────┐                  │
-│         ├─→ event-service (4 replicas)    ───┤                  │
-│         ├─→ booking-service (4 replicas)  ───┼─→ MySQL StatefulSet
-│         └─→ cart-service (4 replicas)    ────┤                  │
+│         ├─→ user-service (2 replicas)    ────┐                  │
+│         ├─→ event-service (2 replicas)    ───┤                  │
+│         ├─→ booking-service (2 replicas)  ───┼─→ MySQL StatefulSet
+│         └─→ cart-service (2 replicas)    ────┤                  │
 │                                           ───┴─→ Redis (1 replica)
 │                                                  │                │
 └──────────────────────────────────────────────────┼────────────────┘
@@ -34,11 +34,14 @@ This directory contains all Kubernetes manifests needed to deploy the GrabShow m
 | `secret.yaml` | Sensitive data (passwords, credentials) |
 | `mysql-statefulset.yaml` | MySQL database with persistent storage |
 | `redis-deployment.yaml` | Redis cache layer |
-| `user-service.yaml` | User microservice (4 replicas) |
-| `event-service.yaml` | Event microservice (4 replicas) |
-| `booking-service.yaml` | Booking microservice (4 replicas) |
-| `cart-service.yaml` | Cart microservice (4 replicas) |
+| `user-service.yaml` | User microservice (2 replicas) |
+| `event-service.yaml` | Event microservice (2 replicas) |
+| `booking-service.yaml` | Booking microservice (2 replicas) |
+| `cart-service.yaml` | Cart microservice (2 replicas) |
 | `ingress.yaml` | API Gateway routing rules |
+| `servicemonitor.yaml` | Prometheus metrics scraping configuration |
+| `prometheus-rules.yaml` | Alert rules for Prometheus |
+| `monitoring-nodeport.yaml` | External access for Prometheus/Grafana |
 | `deploy.sh` | Automated deployment script |
 
 ## Prerequisites
@@ -420,6 +423,120 @@ kubectl delete -f configmap.yaml -f secret.yaml -f mysql-statefulset.yaml \
   -f redis-deployment.yaml -f user-service.yaml -f event-service.yaml \
   -f booking-service.yaml -f cart-service.yaml -f ingress.yaml
 ```
+
+## Monitoring & Observability
+
+### Setup Monitoring Stack
+
+The project includes comprehensive monitoring using Prometheus & Grafana:
+
+```bash
+# Quick setup (automated)
+./setup-monitoring.sh
+
+# This installs:
+# - Prometheus (metrics collection)
+# - Grafana (dashboards & visualization)
+# - AlertManager (alerting)
+# - ServiceMonitors (auto-discovery)
+# - Alert rules (predefined alerts)
+```
+
+### Access Monitoring Tools
+
+**NodePort Access (Permanent)**:
+```bash
+# Get node IP
+kubectl get nodes -o wide
+
+# Access URLs
+Prometheus:   http://<node-ip>:30090
+Grafana:      http://<node-ip>:30300  (admin/admin123)
+AlertManager: http://<node-ip>:30093
+```
+
+**Port-Forward Access (Temporary)**:
+```bash
+# Prometheus
+kubectl port-forward -n monitoring svc/prometheus-operated 9090:9090 --address 0.0.0.0 &
+
+# Grafana
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80 --address 0.0.0.0 &
+
+# AlertManager
+kubectl port-forward -n monitoring svc/alertmanager-operated 9093:9093 --address 0.0.0.0 &
+```
+
+### View Metrics
+
+**Check if services are being scraped**:
+```bash
+# Open Prometheus UI
+# Visit: http://<node-ip>:30090/targets
+
+# All microservices should show as "UP"
+```
+
+**Example PromQL Queries**:
+```promql
+# Request rate per service
+sum(rate(http_server_requests_seconds_count[5m])) by (job)
+
+# Error rate
+sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (job)
+
+# JVM memory usage
+jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} * 100
+
+# Pod restarts
+increase(kube_pod_container_status_restarts_total[1h])
+```
+
+### Import Grafana Dashboards
+
+1. Login to Grafana (admin/admin123)
+2. Click **+** → **Import**
+3. Enter dashboard IDs:
+   - **1860**: Node Exporter / Nodes
+   - **15759**: Kubernetes / Kube-Prometheus-Stack
+   - **11378**: JVM Micrometer (Spring Boot)
+4. Select Prometheus datasource
+5. Click **Import**
+
+### Alert Management
+
+**View Active Alerts**:
+```bash
+# Prometheus UI
+http://<node-ip>:30090/alerts
+
+# AlertManager UI
+http://<node-ip>:30093
+```
+
+**Predefined Alerts**:
+- HighHTTPErrorRate (5xx > 5%)
+- ServiceResponseTimeHigh (P95 > 1s)
+- JVMMemoryUsageHigh (heap > 85%)
+- PodCrashLoop (frequent restarts)
+- DatabaseConnectionHigh (MySQL > 80 connections)
+- RedisMemoryHigh (memory > 85%)
+- NodeMemoryPressure
+- NodeNotReady
+
+**Check ServiceMonitors**:
+```bash
+# List ServiceMonitors
+kubectl get servicemonitor -n default
+
+# Should show:
+# user-service-monitor
+# event-service-monitor
+# booking-service-monitor
+# cart-service-monitor
+```
+
+For detailed monitoring documentation, see [`monitoring_manual.md`](../monitoring_manual.md) in the project root.
 
 ## Support & Debugging
 

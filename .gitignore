@@ -36,3 +36,9 @@ Thumbs.db
 kubernetes/secret.yaml
 kubernetes/secret*.yaml
 kubernetes/*-secret.yaml
+
+# Documentation files (exclude from GitHub)
+FIX-PVC-UNBOUND.md
+FRESH-SETUP-GUIDE.md
+INSTALL-DOCKER.md
+MONITORING-GUIDE.md
